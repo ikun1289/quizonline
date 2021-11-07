@@ -5,7 +5,14 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+import javax.mail.MessagingException;
+
+import org.apache.tomcat.util.codec.binary.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -14,11 +21,14 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.tlcn.quizonline.models.Classroom;
 import com.tlcn.quizonline.models.User;
+import com.tlcn.quizonline.models.VerifyToken;
 import com.tlcn.quizonline.repositories.UserRepository;
 import com.tlcn.quizonline.security.CustomUserDetails;
 
 import lombok.extern.java.Log;
+import net.bytebuddy.utility.RandomString;
 
 @Service
 public class UserService implements UserDetailsService {
@@ -27,6 +37,12 @@ public class UserService implements UserDetailsService {
 	UserRepository userRepository;
 	@Autowired
 	PasswordEncoder passwordEncoder;
+	@Autowired
+	VerifyTokenService tokenService;
+	@Autowired
+	private MongoTemplate mongoTemplate;
+	@Autowired
+	EmailService emailService;
 
 	public List<User> getAllUser() {
 		return userRepository.findAll();
@@ -37,7 +53,7 @@ public class UserService implements UserDetailsService {
 	}
 
 	public void addNewUser(User user) {
-		user.setPasswd(passwordEncoder.encode(user.getPasswd()));
+		user.setPassword(passwordEncoder.encode(user.getPassword()));
 		userRepository.save(user);
 	}
 
@@ -45,8 +61,16 @@ public class UserService implements UserDetailsService {
 		return userRepository.findByUserName(username);
 	}
 
+	public User findByEmail(String email) {
+		return userRepository.findByEmail(email);
+	}
+
 	public Boolean checkUsername(String username) {
-		return  (userRepository.findByUserName(username) != null) ? true : false;
+		return (userRepository.findByUserName(username) != null) ? true : false;
+	}
+
+	public Boolean checkUserByEmail(String email) {
+		return userRepository.findByEmail(email) != null ? true : false;
 	}
 
 	@Override
@@ -57,7 +81,7 @@ public class UserService implements UserDetailsService {
 			System.out.println("User not found!");
 			throw new UsernameNotFoundException("User not found!");
 		} else {
-			System.out.println("User found: " + user.getUserName() +" "+user.getPasswd());
+			System.out.println("User found: " + user.getUserName() + " " + user.getPassword());
 		}
 		return new CustomUserDetails(user);
 
@@ -70,9 +94,33 @@ public class UserService implements UserDetailsService {
 			System.out.println("User not found!");
 			throw new UsernameNotFoundException("User not found!");
 		} else {
-			System.out.println("User found: " + user.get().getUserName() +" "+user.get().getPasswd());
+			System.out.println("User found: " + user.get().getUserName() + " " + user.get().getPassword());
 		}
 		return new CustomUserDetails(user.get());
 	}
-}
 
+	public void register(User user) // String siteURL
+	{
+		user.setPassword(passwordEncoder.encode(user.getPassword()));
+		user.setEnable(false);
+		sendVerificationEmail(user);
+		userRepository.save(user);
+	}
+
+	private void sendVerificationEmail(User user) {
+		VerifyToken token = tokenService.createNewToken(user.getId().toHexString());
+		tokenService.saveNewVerifyToken(token);
+		try {
+			emailService.sendMail(user, token);
+		} catch (MessagingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	public User enableUser(String id) {
+		Query query = new Query(Criteria.where("id").is(id));
+		Update update = new Update().set("enable", true);
+		return this.mongoTemplate.findAndModify(query, update, User.class);
+	}
+}

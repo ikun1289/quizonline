@@ -13,12 +13,13 @@ public class User {
 	@Id
 	private ObjectId id = new ObjectId();
 	private String userName;
-	private String passwd;
+	private String password;
 	private String name;
 	private String email;
 	private String phone;
 	private Boolean gender;//true == male
 	private String role;
+	private Boolean enable;
 	
 	public User() {
 		super();
@@ -29,22 +30,25 @@ public class User {
 		super();
 		this.id = id;
 		this.userName = userName;
-		this.passwd = passwd;
+		this.password = passwd;
 		this.name = name;
 		this.email = email;
 		this.phone = phone;
 		this.gender = gender;
 		this.role = role;
+		this.enable = false;
 	}
-	public User(String userName, String passwd, String email, String role) {
+	public User(String userName, String passwd, String email, String name,String role) {
 		super();
 		this.id = new ObjectId();
 		this.userName = userName;
-		this.passwd = passwd;
+		this.password = passwd;
 		this.email = email;
+		this.name = name;
 		this.phone = "";
 		this.gender = false;
 		this.role = role;
+		this.enable = false;
 	}
 	
 }
