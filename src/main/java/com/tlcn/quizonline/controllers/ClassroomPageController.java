@@ -12,7 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -26,6 +25,9 @@ public class ClassroomPageController {
 
 	@Autowired
 	private ClassroomService classroomService;
+	
+	
+	//teacher
 	
 	@GetMapping("/teacher/getClassByTeacherID")
 	public List<Classroom> getClassByTeacherID(@RequestParam("id") String teacherID){
@@ -62,7 +64,20 @@ public class ClassroomPageController {
 		
 		return new ResponseEntity<String>("Tạo classroom mới thành công",HttpStatus.CREATED);
 	}
+	//--end of teacher--
+	
+	//student
+	
+	@GetMapping("/student/getclasses")
+	public ResponseEntity<?> getClassesStudent(HttpServletRequest request)
+	{
+		String jwtToken = new JwtAuthenticationFilter().getJwtFromRequest(request);
+		String studentId = new JwtTokenProvider().getUserIdFromJWT(jwtToken);
+		List<Classroom> classrooms = classroomService.getAllClassStudentAttend(studentId);
+		return new ResponseEntity<List<Classroom>>(classrooms,HttpStatus.FOUND);
+	}
 
+	//--end of student
 	
 	
 	
