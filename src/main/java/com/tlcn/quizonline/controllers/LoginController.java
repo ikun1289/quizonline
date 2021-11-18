@@ -1,7 +1,5 @@
 package com.tlcn.quizonline.controllers;
 
-import java.util.Optional;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,8 +20,8 @@ import com.tlcn.quizonline.payload.GeneralResponse;
 import com.tlcn.quizonline.payload.LoginRequest;
 import com.tlcn.quizonline.payload.LoginResponse;
 import com.tlcn.quizonline.payload.RandomStuff;
-import com.tlcn.quizonline.payload.RegisterRequest;
 import com.tlcn.quizonline.security.CustomUserDetails;
+import com.tlcn.quizonline.services.EmailService;
 import com.tlcn.quizonline.services.UserService;
 import com.tlcn.quizonline.services.VerifyTokenService;
 
@@ -35,12 +33,15 @@ public class LoginController {
 
 	@Autowired
 	private UserService UserService;
-	
-	@Autowired 
+
+	@Autowired
 	private VerifyTokenService tokenService;
 
 	@Autowired
 	private JwtTokenProvider tokenProvider;
+
+	@Autowired
+	private EmailService EmailService;
 
 	@PostMapping("/login")
 	public LoginResponse authenticateUser(@RequestBody LoginRequest loginRequest) {
@@ -57,7 +58,8 @@ public class LoginController {
 		// Trả về jwt cho người dùng.
 		String jwt = tokenProvider.generateToken((CustomUserDetails) authentication.getPrincipal());
 		System.out.println(loginRequest.getUsername() + " " + loginRequest.getPassword());
-		return new LoginResponse(jwt);
+		String role = UserService.findUsername(loginRequest.getUsername()).getRole();
+		return new LoginResponse(jwt, role);
 	}
 
 	// Api /api/random yêu cầu phải xác thực mới có thể request
@@ -70,59 +72,67 @@ public class LoginController {
 	public ResponseEntity<GeneralResponse> registerUser(@RequestBody User registerRequrest) {
 		System.out.println(registerRequrest.toString());
 		User user1 = UserService.findByEmail(registerRequrest.getEmail());
-		if(user1!= null) {
-			if(user1.getUserName().equals(registerRequrest.getUserName())) {
-				if(user1.getEnable()) {
+		if (user1 != null) {
+			if (user1.getUserName().equals(registerRequrest.getUserName())) {
+				if (user1.getEnable()) {
 					ResponseEntity.status(HttpStatus.CONFLICT);
 					System.out.println("Tài khoản này đã được tạo rồi");
 					return new ResponseEntity<>(new GeneralResponse("Đã tồn tại tài khoản này"), HttpStatus.CONFLICT);
-				}
-				else {
+				} else {
 					ResponseEntity.status(HttpStatus.ALREADY_REPORTED);
 					System.out.println("Tài khoản này đã được tạo rồi mà chưa kích hoạt");
-					return new ResponseEntity<>(new GeneralResponse("Tài khoản này đã tạo mà chưa kích hoạt, bạn có muốn tạo lại?"), HttpStatus.ALREADY_REPORTED);
+					return new ResponseEntity<>(
+							new GeneralResponse("Tài khoản này đã tạo mà chưa kích hoạt, bạn có muốn tạo lại?"),
+							HttpStatus.ALREADY_REPORTED);
 				}
-			}
-			else {
+			} else {
 				ResponseEntity.status(HttpStatus.CONFLICT);
 				System.out.println("email đã tồn tại");
 				return new ResponseEntity<>(new GeneralResponse("Email đã được sử dụng"), HttpStatus.CONFLICT);
 			}
 		}
-		
+
 		if (UserService.checkUsername(registerRequrest.getUserName())) {
 			ResponseEntity.status(HttpStatus.CONFLICT);
 			System.out.println("user đã tồn tại");
 			return new ResponseEntity<>(new GeneralResponse("Đã tồn tại username"), HttpStatus.CONFLICT);
 		}
-		
 
-//		User user = new User(registerRequrest.getUserName(), registerRequrest.getPassword(),
-//				registerRequrest.getEmail(), "user");
+		User user = UserService.register(registerRequrest);
+		VerifyToken token = UserService.createToken(user);
 
-		
-		UserService.register(registerRequrest);
 		ResponseEntity.status(HttpStatus.OK);
-		return new ResponseEntity<>(new GeneralResponse("Đăng ký thành công"), HttpStatus.OK);
+		System.out.println("đk thành công");
+		Thread thread = new Thread() {
+			public void run() {
+				try {
+					EmailService.sendMail(user, token);
+				} catch (Exception e) {
+					// TODO: handle exception
+					System.out.println(e.getMessage());
+				}
+
+			}
+		};
+		thread.start();
+		return new ResponseEntity<>(new GeneralResponse("Đăng ký thành công! \nHãy kiểm tra mail của bạn"),
+				HttpStatus.OK);
+
 	}
-	
-	
+
 	@GetMapping("/verify")
 	public String verifyAccount(@RequestParam("token") String token) {
-		
+
 		VerifyToken vToken = tokenService.getVTokenByToken(token);
 		System.out.println("verifying");
-		if(vToken!=null) {
+		if (vToken != null) {
 			UserService.enableUser(vToken.getUserId());
 			tokenService.removeToken(token);
 			return "Account Verified!";
-		}
-		else {
+		} else {
 			return "Verify failed";
 		}
-		
-		
-		
+
 	}
 
 }

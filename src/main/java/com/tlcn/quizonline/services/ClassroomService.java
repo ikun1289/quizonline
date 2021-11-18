@@ -3,7 +3,6 @@ package com.tlcn.quizonline.services;
 import java.util.List;
 import java.util.Optional;
 
-import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -11,10 +10,8 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 
-import com.tlcn.quizonline.models.Answer;
 import com.tlcn.quizonline.models.ClassSection;
 import com.tlcn.quizonline.models.Classroom;
-import com.tlcn.quizonline.models.Quiz;
 import com.tlcn.quizonline.repositories.ClassroomRepository;
 
 @Service
@@ -54,4 +51,21 @@ public class ClassroomService {
 		//this.mongoTemplate.find(query, Classroom.class);
 	}
 	
+	public List<Classroom> getClassesByStudentID(String id) {
+		return cRepository.findByStudents(id);
+	}
+	
+	public void addNewClassSectionToClass(ClassSection section, String classId)
+	{
+		Query query = new Query(Criteria.where("id").is(classId));
+		Update update = new Update().push("sections", section.get_id());
+		this.mongoTemplate.findAndModify(query, update, Classroom.class);
+	}
+	
+	public void addNewClassSectionsToClass(List<String> sectionsId, String classId)
+	{
+		Query query = new Query(Criteria.where("id").is(classId));
+		Update update = new Update().push("sections").each(sectionsId);
+		this.mongoTemplate.findAndModify(query, update, Classroom.class);
+	}
 }

@@ -2,18 +2,23 @@ package com.tlcn.quizonline;
 
 import java.util.Arrays;
 
+import org.bson.types.ObjectId;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
 import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
+
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 
 
 @SpringBootApplication
@@ -43,4 +48,9 @@ public class QuizonlineApplication {
 		return new CorsFilter(urlBasedCorsConfigurationSource);
 	}
 
+	@Bean
+	public Jackson2ObjectMapperBuilderCustomizer customizer()
+	{
+	    return builder -> builder.serializerByType(ObjectId.class,new ToStringSerializer());
+	}
 }

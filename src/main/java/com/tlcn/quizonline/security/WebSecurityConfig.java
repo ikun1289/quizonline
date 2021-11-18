@@ -49,7 +49,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
 		http.csrf().disable().authorizeRequests()
-		.antMatchers("/login","/register","/","/verify").permitAll()
+		.antMatchers("/login","/register","/","/verify","/addRandomClass", "/student/testGetTest").permitAll()
+		.antMatchers("/teacher/**").hasAuthority("teacher")
+		.antMatchers("/student/**").hasAuthority("student")
 		.anyRequest().authenticated(); // Tất cả các request khác đều cần phải xác
 																			// thực mới được truy cập
 

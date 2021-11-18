@@ -16,12 +16,14 @@ public class JwtTokenProvider {
     private final String JWT_SECRET = "xhuuanng";
 
     //Thời gian có hiệu lực của chuỗi jwt
-    private final long JWT_EXPIRATION = 604800000L;
+    private final long JWT_EXPIRATION = 28800L*1000;
 
     // Tạo ra jwt từ thông tin user
     public String generateToken(CustomUserDetails userDetails) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + JWT_EXPIRATION);
+        System.out.println(new Date(now.getTime()));
+        System.out.println(expiryDate);
         // Tạo chuỗi json web token từ id của user.
         return Jwts.builder()
                    .setSubject(userDetails.getUser().getId().toHexString())

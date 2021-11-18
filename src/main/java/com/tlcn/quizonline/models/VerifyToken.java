@@ -1,10 +1,9 @@
 package com.tlcn.quizonline.models;
 
-import java.security.Timestamp;
-import java.time.LocalDateTime;
 
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import lombok.Data;
@@ -16,8 +15,8 @@ public class VerifyToken {
 	private ObjectId id = new ObjectId();
 	private String token;
 	private String userId;
-	private LocalDateTime expireAt;
-	private	Timestamp timestamp;
+	@Indexed(expireAfterSeconds = 59)
+	private String createDatetime;
 	
 	
 	public VerifyToken() {
@@ -26,12 +25,11 @@ public class VerifyToken {
 	}
 
 
-	public VerifyToken(String token, String userId, LocalDateTime expireAt, Timestamp timestamp) {
+	public VerifyToken(String token, String userId, String expireAt) {
 		super();
 		this.token = token;
 		this.userId = userId;
-		this.expireAt = expireAt;
-		this.timestamp = timestamp;
+		this.createDatetime = expireAt;
 	}
 	
 	

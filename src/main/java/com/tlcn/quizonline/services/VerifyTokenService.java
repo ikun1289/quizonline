@@ -1,6 +1,8 @@
 package com.tlcn.quizonline.services;
 
 import java.time.LocalDateTime;
+import java.util.Date;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -26,7 +28,7 @@ public class VerifyTokenService {
 			token = checkToken;
 			String randomCode = new RandomString().nextString();
 			token.setToken(randomCode);
-			token.setExpireAt(LocalDateTime.now().plusSeconds(28800));
+			token.setCreateDatetime(new Date().getTime() +"");
 		}
 		TokenRepository.save(token);
 	}
@@ -44,7 +46,7 @@ public class VerifyTokenService {
 		String randomCode = new RandomString().nextString();
 		token.setToken(randomCode);
 		token.setUserId(userId);
-		
+		token.setCreateDatetime(new Date().getTime() +"");
 		return token;
 		
 	}

@@ -72,6 +72,8 @@ public class UserService implements UserDetailsService {
 	public Boolean checkUserByEmail(String email) {
 		return userRepository.findByEmail(email) != null ? true : false;
 	}
+	
+	
 
 	@Override
 	public UserDetails loadUserByUsername(String name) throws UsernameNotFoundException {
@@ -99,23 +101,18 @@ public class UserService implements UserDetailsService {
 		return new CustomUserDetails(user.get());
 	}
 
-	public void register(User user) // String siteURL
+	public User register(User user) // String siteURL
 	{
 		user.setPassword(passwordEncoder.encode(user.getPassword()));
 		user.setEnable(false);
-		sendVerificationEmail(user);
 		userRepository.save(user);
+		return user;
 	}
 
-	private void sendVerificationEmail(User user) {
+	public VerifyToken createToken(User user) {
 		VerifyToken token = tokenService.createNewToken(user.getId().toHexString());
 		tokenService.saveNewVerifyToken(token);
-		try {
-			emailService.sendMail(user, token);
-		} catch (MessagingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		return token;
 	}
 
 	public User enableUser(String id) {
