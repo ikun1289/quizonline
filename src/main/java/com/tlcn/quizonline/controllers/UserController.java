@@ -105,4 +105,15 @@ public class UserController {
 //		return true;
 //	}
 	
+	@GetMapping("/student/authorize")
+	public ResponseEntity<?> authorizeStudent()
+	{
+		return new ResponseEntity<String>(HttpStatus.OK);
+	}
+	
+	@GetMapping("/teacher/authorize")
+	public ResponseEntity<?> authorizeTeacher()
+	{
+		return new ResponseEntity<String>(HttpStatus.OK);
+	}
 }

@@ -2,6 +2,7 @@ package com.tlcn.quizonline.controllers;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -17,14 +18,27 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.tlcn.quizonline.JWT.JwtAuthenticationFilter;
 import com.tlcn.quizonline.JWT.JwtTokenProvider;
+import com.tlcn.quizonline.models.ClassSection;
 import com.tlcn.quizonline.models.Classroom;
+import com.tlcn.quizonline.models.Test;
+import com.tlcn.quizonline.models.User;
+import com.tlcn.quizonline.payload.ClassSectionDetail;
+import com.tlcn.quizonline.services.ClassSectionService;
 import com.tlcn.quizonline.services.ClassroomService;
+import com.tlcn.quizonline.services.TestService;
+import com.tlcn.quizonline.services.UserService;
 
 @RestController
 public class ClassroomPageController {
 
 	@Autowired
 	private ClassroomService classroomService;
+	@Autowired 
+	private ClassSectionService ClassSectionService;
+	@Autowired
+	private TestService testService;
+	@Autowired
+	private UserService userService;
 	
 	
 	//teacher
@@ -77,6 +91,66 @@ public class ClassroomPageController {
 		return new ResponseEntity<List<Classroom>>(classrooms,HttpStatus.FOUND);
 	}
 
+	@GetMapping("/student/classdetail")
+	public ResponseEntity<?> classDetailStudent(HttpServletRequest request, @RequestParam("id") String classId)
+	{
+		String jwtToken = new JwtAuthenticationFilter().getJwtFromRequest(request);
+		String studentId = new JwtTokenProvider().getUserIdFromJWT(jwtToken);
+		Classroom c = classroomService.getClassroomByID(classId);
+		if(c!=null && c.getStudents().contains(studentId))
+		{
+			List<ClassSectionDetail> details = new ArrayList<>();
+			for (String sectionId : c.getSections()) {
+				ClassSectionDetail detail = new ClassSectionDetail();
+				Optional<ClassSection> section = ClassSectionService.getClassSectionById(sectionId); 
+				if(section.isPresent())
+				{
+					detail.setId(sectionId);
+					detail.setName(section.get().getName());
+					List<Test> detail_tests = new ArrayList<>();
+					for (String testId : section.get().getTests()) {
+						Optional<Test> test = testService.getTestById(testId);
+						if(test.isPresent())
+						{
+							Test t = new Test();
+							t.setId(test.get().getId());
+							t.setName(test.get().getName());
+							detail_tests.add(t);
+						}
+					}
+					detail.setTests(detail_tests);
+					details.add(detail);
+				}
+			}
+			return new ResponseEntity<List<ClassSectionDetail>>(details,HttpStatus.OK);
+		}
+		return new ResponseEntity<String>("Lớp học không tồn tại hoặc bạn không nằm trong lớp học này",HttpStatus.BAD_REQUEST);
+	}
+	
+	@GetMapping("/student/liststudentinclass")
+	public ResponseEntity<?> listStudentInClass(HttpServletRequest request, @RequestParam("id") String classId)
+	{
+		String jwtToken = new JwtAuthenticationFilter().getJwtFromRequest(request);
+		String studentId = new JwtTokenProvider().getUserIdFromJWT(jwtToken);
+		Classroom c = classroomService.getClassroomByID(classId);
+		if(c!=null && c.getStudents().contains(studentId))
+		{
+			List<User> listStudent = new ArrayList<>();
+			for (String userId : c.getStudents()) {
+				Optional<User> u = userService.getUserById(userId);
+				if(u.isPresent())
+				{
+					User student = new User();
+					student.setId(u.get().getId());
+					student.setEmail(u.get().getEmail());
+					student.setName(u.get().getName());
+					listStudent.add(student);
+				}
+			}
+			return new ResponseEntity<List<User>>(listStudent,HttpStatus.OK);
+		}
+		return new ResponseEntity<String>("Lớp học không tồn tại hoặc bạn không nằm trong lớp học này",HttpStatus.BAD_REQUEST);
+	}
 	//--end of student
 	
 	
