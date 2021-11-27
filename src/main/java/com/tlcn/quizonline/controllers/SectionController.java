@@ -1,5 +1,6 @@
 package com.tlcn.quizonline.controllers;
 
+import java.util.Map;
 import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
@@ -54,6 +55,24 @@ public class SectionController {
 		if(section.isPresent())
 		{
 			classSectionService.deleteSectionById(sectionId);
+			return new ResponseEntity<String>("Xóa chương thành công",HttpStatus.FOUND);
+		}
+		else
+		{
+			return new ResponseEntity<String>("Chương không có tồn tại",HttpStatus.NOT_FOUND);
+		}
+			
+	}
+	
+	@PostMapping("/teacher/editSection")
+	public ResponseEntity<?> editSection(HttpServletRequest request, @RequestParam("sectionId") String sectionId, @RequestBody Map<String, String> body)
+	{
+		Optional<ClassSection> section= classSectionService.getClassSectionById(sectionId);
+		if(section.isPresent())
+		{
+			ClassSection s = section.get();
+			s.setName(body.get("name"));
+			classSectionService.editSection(s);
 			return new ResponseEntity<String>("Xóa chương thành công",HttpStatus.FOUND);
 		}
 		else

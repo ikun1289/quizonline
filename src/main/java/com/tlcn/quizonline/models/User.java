@@ -19,6 +19,7 @@ public class User {
 	@Indexed(unique=true)
 	private String email;
 	private String phone;
+	private String address;
 	private Boolean gender;//true == male
 	private String role;
 	private Boolean enable;
@@ -28,7 +29,7 @@ public class User {
 		// TODO Auto-generated constructor stub
 	}
 	
-	public User(ObjectId id, String userName, String passwd, String name, String email, String phone, Boolean gender, String role) {
+	public User(ObjectId id, String userName, String passwd, String name, String email, String phone,String address, Boolean gender, String role) {
 		super();
 		this.id = id;
 		this.userName = userName;
@@ -36,6 +37,7 @@ public class User {
 		this.name = name;
 		this.email = email;
 		this.phone = phone;
+		this.address = address;
 		this.gender = gender;
 		this.role = role;
 		this.enable = false;

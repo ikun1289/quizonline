@@ -53,4 +53,9 @@ public class ClassSectionService {
 		this.mongoTemplate.findAndModify(query, update, ClassSection.class);
 	}
 
+	public void editSection(ClassSection s) {
+		classSectionRepository.save(s);
+		
+	}
+
 }
