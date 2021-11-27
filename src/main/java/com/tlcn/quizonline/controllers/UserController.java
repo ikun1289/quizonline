@@ -78,7 +78,7 @@ public class UserController {
 			}
 			else
 			{
-				return ResponseEntity.status(HttpStatus.CONFLICT).body("Old password not match!");
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Old password not match!");
 			}
 				
 		}

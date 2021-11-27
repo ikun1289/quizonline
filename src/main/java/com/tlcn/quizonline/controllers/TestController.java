@@ -151,5 +151,18 @@ public class TestController {
 		return new ResponseEntity<String>("Thêm bài kiểm tra mới thành công", HttpStatus.CREATED);
 
 	}
+	
+	@PostMapping("/teacher/deleteTest")
+	public ResponseEntity<String> deleteTest(@RequestParam("sectionId") String sectionid) {
+
+		try {
+			testService.deleteTestById(sectionid);
+			return new ResponseEntity<String>("Xóa bài kiểm tra thành công", HttpStatus.OK);
+		} catch (Exception e) {
+			return new ResponseEntity<String>("Đã xảy ra lỗi", HttpStatus.BAD_REQUEST);
+		}
+		
+		
+	} 
 
 }

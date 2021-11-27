@@ -2,6 +2,8 @@ package com.tlcn.quizonline.controllers;
 
 import java.util.Optional;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.tlcn.quizonline.JWT.JwtAuthenticationFilter;
+import com.tlcn.quizonline.JWT.JwtTokenProvider;
 import com.tlcn.quizonline.models.ClassSection;
 import com.tlcn.quizonline.services.ClassSectionService;
 
@@ -39,6 +43,22 @@ public class SectionController {
 		else
 		{
 			return new ResponseEntity<ClassSection>(HttpStatus.NOT_FOUND);
+		}
+			
+	}
+	
+	@PostMapping("/teacher/deleteSection")
+	public ResponseEntity<?> deleteSection(HttpServletRequest request, @RequestParam("sectionId") String sectionId)
+	{
+		Optional<ClassSection> section= classSectionService.getClassSectionById(sectionId);
+		if(section.isPresent())
+		{
+			classSectionService.deleteSectionById(sectionId);
+			return new ResponseEntity<String>("Xóa chương thành công",HttpStatus.FOUND);
+		}
+		else
+		{
+			return new ResponseEntity<String>("Chương không có tồn tại",HttpStatus.NOT_FOUND);
 		}
 			
 	}

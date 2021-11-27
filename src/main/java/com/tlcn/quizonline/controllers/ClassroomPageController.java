@@ -73,11 +73,35 @@ public class ClassroomPageController {
 			,@RequestBody Classroom classroom, @RequestParam("id") String classId) {
 		String jwtToken = new JwtAuthenticationFilter().getJwtFromRequest(request);
 		String teacherId = new JwtTokenProvider().getUserIdFromJWT(jwtToken);
+		Classroom c = classroomService.getClassroomByID(classId);
+		if(classroom.getName()=="")
+			return new ResponseEntity<String>("Tên lớp không được để trống",HttpStatus.BAD_REQUEST);
+		if(c!=null)
+		{
+			c.setName(classroom.getName());
+			classroomService.addClass(c);
+			return new ResponseEntity<String>("Chỉnh sửa classroom thành công",HttpStatus.OK);
+		}
 		
-		classroomService.addClass(classroom);
+		return new ResponseEntity<String>("Classroom với id:"+classId+" không tồn tại",HttpStatus.BAD_REQUEST);
 		
-		return new ResponseEntity<String>("Tạo classroom mới thành công",HttpStatus.CREATED);
 	}
+	
+	@PostMapping("/teacher/deleteClass")
+	public ResponseEntity<String> deleteClass(HttpServletRequest request, @RequestParam("id") String classId) {
+		String jwtToken = new JwtAuthenticationFilter().getJwtFromRequest(request);
+		String teacherId = new JwtTokenProvider().getUserIdFromJWT(jwtToken);
+		Classroom c = classroomService.getClassroomByID(classId);
+		if(c!=null && c.getTeacherID().equals(teacherId))
+		{
+			classroomService.deleteClassById(classId);
+			return new ResponseEntity<String>("Xóa class thành công",HttpStatus.OK);	
+
+		}
+		
+		return new ResponseEntity<String>("Classroom với id:"+classId+" không tồn tại hoặc classroom này không thuộc quyền sở hữu của bạn",HttpStatus.BAD_REQUEST);	
+	}
+	
 	//--end of teacher--
 	
 	//student

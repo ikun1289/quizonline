@@ -42,6 +42,10 @@ public class ClassroomService {
 	{
 		cRepository.save(classroom);
 	}
+	public void deleteClassById(String classId)
+	{
+		cRepository.deleteById(classId);
+	}
 	
 	public Classroom updateClassName(String name, String classId)
 	{

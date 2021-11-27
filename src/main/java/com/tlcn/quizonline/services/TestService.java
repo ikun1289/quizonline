@@ -68,4 +68,9 @@ public class TestService {
 		testRepository.save(test);
 	}
 	
+	public void deleteTestById(String testId)
+	{
+		testRepository.deleteById(testId);
+	}
+	
 }

@@ -35,6 +35,11 @@ public class ClassSectionService {
 		classroomService.addNewClassSectionToClass(classSection, classId);
 	}
 	
+	public void deleteSectionById(String sectionId)
+	{
+		classSectionRepository.deleteById(sectionId);
+	}
+	
 	public void addNewTestToSection(Test test, String sectionId) {
 		Query query = new Query(Criteria.where("_id").is(sectionId));
 		Update update = new Update().push("tests", test.getId());
