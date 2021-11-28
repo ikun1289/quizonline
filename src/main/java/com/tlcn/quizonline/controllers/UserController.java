@@ -40,7 +40,7 @@ public class UserController {
 			User u = user.get();
 			u.setId(null);
 			u.setPassword(null);
-			return new ResponseEntity<User>(user.get(),HttpStatus.FOUND);
+			return new ResponseEntity<User>(user.get(),HttpStatus.OK);
 		}
 		else {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("This user not exist!");
