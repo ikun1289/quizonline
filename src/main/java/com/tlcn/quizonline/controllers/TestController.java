@@ -105,7 +105,7 @@ public class TestController {
 				Quiz p = quizSubmit.stream().filter(quiz -> q.get_id().toHexString().equals(quiz.get_id().toHexString())).findFirst().orElse(null);
 				if (p != null) {
 					// check answer của quiz được nộp
-					score += checkAnswer(p,q);
+					score += checkAnswer(p,q); //p là quiz dưới bt, q là quiz được submit
 				}
 			}
 		}

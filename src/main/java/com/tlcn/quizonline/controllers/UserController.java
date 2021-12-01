@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.tlcn.quizonline.JWT.JwtAuthenticationFilter;
 import com.tlcn.quizonline.JWT.JwtTokenProvider;
 import com.tlcn.quizonline.models.User;
+import com.tlcn.quizonline.payload.LoginResponse;
 import com.tlcn.quizonline.services.UserService;
 
 @RestController
@@ -40,7 +41,7 @@ public class UserController {
 			User u = user.get();
 			u.setId(null);
 			u.setPassword(null);
-			return new ResponseEntity<User>(user.get(),HttpStatus.FOUND);
+			return new ResponseEntity<User>(user.get(),HttpStatus.OK);
 		}
 		else {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("This user not exist!");
@@ -115,5 +116,18 @@ public class UserController {
 	public ResponseEntity<?> authorizeTeacher()
 	{
 		return new ResponseEntity<String>(HttpStatus.OK);
+	}
+	
+	@GetMapping("/jwt-check-role")
+	public ResponseEntity<?> jwtAuthorizeCheckRole(HttpServletRequest request)
+	{
+		String jwt = new JwtAuthenticationFilter().getJwtFromRequest(request);
+		String userId = new JwtTokenProvider().getUserIdFromJWT(jwt);
+		Optional<User> user = userService.getUserById(userId);
+		if(user.isPresent())
+		{
+			return new ResponseEntity<LoginResponse>(new LoginResponse(jwt, user.get().getRole()),HttpStatus.OK);
+		}
+		return new ResponseEntity<String>("JWT ko hợp lệ",HttpStatus.UNAUTHORIZED);
 	}
 }

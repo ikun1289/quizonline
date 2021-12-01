@@ -43,15 +43,18 @@ public class ClassroomPageController {
 	
 	//teacher
 	
-	@GetMapping("/teacher/getClassByTeacherID")
-	public List<Classroom> getClassByTeacherID(@RequestParam("id") String teacherID){
-		return classroomService.getAllClassByTeacherID(teacherID);
+	@GetMapping("/teacher/getClasses")
+	public ResponseEntity<?> getClassByTeacherID(HttpServletRequest request){
+		String jwtToken = new JwtAuthenticationFilter().getJwtFromRequest(request);
+		String teacherId = new JwtTokenProvider().getUserIdFromJWT(jwtToken);
+		List<Classroom> classrooms = classroomService.getAllClassByTeacherID(teacherId);
+		return new ResponseEntity<List<Classroom>>(classrooms, HttpStatus.OK);
 	}
 	
-	@GetMapping("/teacher/getClassByTeacherRandom")
-	public List<Classroom> getClassByTeacherRandom(){
-		return classroomService.getAllClassByTeacherID("T-random");
-	}
+//	@GetMapping("/teacher/getClassByTeacherRandom")
+//	public List<Classroom> getClassByTeacherRandom(){
+//		return classroomService.getAllClassByTeacherID("T-random");
+//	}
 	
 	@PostMapping("/teacher/addNewClass")
 	public ResponseEntity<String> addNewCLass(HttpServletRequest request
