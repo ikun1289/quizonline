@@ -14,8 +14,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.tlcn.quizonline.JWT.JwtAuthenticationFilter;
-import com.tlcn.quizonline.JWT.JwtTokenProvider;
 import com.tlcn.quizonline.models.ClassSection;
 import com.tlcn.quizonline.services.ClassSectionService;
 

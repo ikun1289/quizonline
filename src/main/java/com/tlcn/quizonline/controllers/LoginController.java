@@ -71,9 +71,9 @@ public class LoginController {
 	@PostMapping("/register")
 	public ResponseEntity<GeneralResponse> registerUser(@RequestBody User registerRequrest) {
 		System.out.println(registerRequrest.toString());
-		if(registerRequrest.getUserName()== "" || registerRequrest.getEmail()=="" || registerRequrest.getPassword()=="")
-		{
-			return new ResponseEntity<>(new GeneralResponse("Những trường quan trọng không được để trống"), HttpStatus.BAD_REQUEST);
+		if (validateUserInfor(registerRequrest)) {
+			return new ResponseEntity<>(new GeneralResponse("Những trường quan trọng không hợp lệ"),
+					HttpStatus.BAD_REQUEST);
 		}
 		User user1 = UserService.findByEmail(registerRequrest.getEmail());
 		if (user1 != null) {
@@ -122,6 +122,15 @@ public class LoginController {
 		return new ResponseEntity<>(new GeneralResponse("Đăng ký thành công! \nHãy kiểm tra mail của bạn"),
 				HttpStatus.OK);
 
+	}
+
+	private boolean validateUserInfor(User registerRequrest) {
+		if(registerRequrest.getUserName() == "" || registerRequrest.getEmail() == ""
+				|| registerRequrest.getPassword() == "")
+			return false;
+		if(registerRequrest.getName().length()<6 || registerRequrest.getPassword().length()<8)
+			return false;
+		return true;
 	}
 
 	@GetMapping("/verify")

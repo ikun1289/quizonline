@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +24,7 @@ import com.tlcn.quizonline.models.Classroom;
 import com.tlcn.quizonline.models.Quiz;
 import com.tlcn.quizonline.models.Test;
 import com.tlcn.quizonline.models.TestResult;
+import com.tlcn.quizonline.models.User;
 import com.tlcn.quizonline.services.TestResultService;
 import com.tlcn.quizonline.services.TestService;
 
@@ -45,10 +47,12 @@ public class TestController {
 
 			List<TestResult> testResults = testResultService.getTestResultByTestAndStudent(testId, studentId);
 			if (testResults.size() < test.get().getNumbRetry()) {
+				User u = new User();
+				u.setId(new ObjectId(studentId));
 				TestResult testResult = new TestResult();
 				testResult.setStartTime(Instant.now().toEpochMilli());
 				testResult.setTestId(testId);
-				testResult.setStudentId(studentId);
+				testResult.setStudent(u);
 				testResult.setFinishTime(0);
 
 				testResultService.saveTestResult(testResult);
@@ -72,6 +76,12 @@ public class TestController {
 		Optional<Test> test;
 		int score = 0;
 
+		//check if test exist
+		test = testService.getTestById(testId);
+		if (!test.isPresent()) {
+			return new ResponseEntity<String>("This test must have been deleted or smt.", HttpStatus.NOT_FOUND);
+		}
+		
 		// check if u have started doing this test or not
 		List<TestResult> testResults = testResultService.getTestResultByTestAndStudent(testId, studentId);
 		if (testResults.size() == 0) {
@@ -79,10 +89,13 @@ public class TestController {
 			return new ResponseEntity<String>("You havent started doing this test", HttpStatus.BAD_REQUEST);
 		}
 		testResult = testResults.get(testResults.size() - 1);
-		test = testService.getTestById(testId);
-		if (!test.isPresent()) {
-			return new ResponseEntity<String>("This test must have been deleted or smt.", HttpStatus.NOT_FOUND);
+		
+		//check if numbRetry
+		if(testResult.getFinishTime()>0 )
+		{
+			return new ResponseEntity<String>("You can only submit once", HttpStatus.BAD_REQUEST);
 		}
+			
 
 		// check if time is acceptable
 		Date date = new Date(testResult.getStartTime());
@@ -101,11 +114,11 @@ public class TestController {
 		if (quizs.isPresent()) {
 			List<Quiz> quizSubmit = quizs.get();
 			// for mỗi quiz được nộp check quiz đó trong danh sách quiz của test
-			for (Quiz q : test.get().getQuizs()) {
-				Quiz p = quizSubmit.stream().filter(quiz -> q.get_id().toHexString().equals(quiz.get_id().toHexString())).findFirst().orElse(null);
+			for (Quiz p : test.get().getQuizs()) {
+				Quiz q = quizSubmit.stream().filter(quiz -> p.get_id().toHexString().equals(quiz.get_id().toHexString())).findFirst().orElse(null);
 				if (p != null) {
 					// check answer của quiz được nộp
-					score += checkAnswer(p,q); //p là quiz dưới bt, q là quiz được submit
+					score += checkAnswer(p,q); //p là quiz dưới db, q là quiz được submit
 				}
 			}
 		}
@@ -122,10 +135,11 @@ public class TestController {
 	}
 
 	private int checkAnswer(Quiz p, Quiz q) {
-		for (Answer answer : q.getAnswers()) {
+		int numCorrect = 0;
+		for (Answer answer : p.getAnswers()) {
 			if (answer.isCorrect()) {
 				Answer kq = null;
-				kq = p.getAnswers().stream()
+				kq = q.getAnswers().stream()
 						.filter(answer2 -> answer.get_id().toHexString().equals(answer2.get_id().toHexString()))
 						.findFirst().orElse(null);
 				System.out.println("\nchecking answer...");
@@ -133,8 +147,12 @@ public class TestController {
 				System.out.println(kq);
 				if (kq == null)
 					return 0;
+				numCorrect++;
 			}
 		}
+		System.out.println(q.getAnswers().size() +" "+numCorrect);
+		if(numCorrect != q.getAnswers().size())
+			return 0;
 		return 1;
 	}
 
@@ -161,8 +179,12 @@ public class TestController {
 		} catch (Exception e) {
 			return new ResponseEntity<String>("Đã xảy ra lỗi", HttpStatus.BAD_REQUEST);
 		}
-		
-		
 	} 
+	
+	@GetMapping("/listscore")
+	public ResponseEntity<?> listscore(@RequestParam("testId") String testId) {
+		List<TestResult> testResults = testResultService.getTestResultByTestId(testId);
+		return new ResponseEntity<List<TestResult>>(testResults, HttpStatus.OK);
+	}
 
 }

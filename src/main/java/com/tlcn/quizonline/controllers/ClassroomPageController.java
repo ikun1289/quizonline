@@ -68,7 +68,7 @@ public class ClassroomPageController {
 		
 		classroomService.addClass(classroom);
 		
-		return new ResponseEntity<String>("Tạo classroom mới thành công",HttpStatus.CREATED);
+		return new ResponseEntity<String>("Tạo classroom mới thành công",HttpStatus.OK);
 	}
 	
 	@PostMapping("/teacher/editclass")
@@ -79,7 +79,7 @@ public class ClassroomPageController {
 		Classroom c = classroomService.getClassroomByID(classId);
 		if(classroom.getName()=="")
 			return new ResponseEntity<String>("Tên lớp không được để trống",HttpStatus.BAD_REQUEST);
-		if(c!=null)
+		if(c!=null && c.getTeacherID().equals(teacherId))
 		{
 			c.setName(classroom.getName());
 			classroomService.addClass(c);
@@ -115,7 +115,7 @@ public class ClassroomPageController {
 		String jwtToken = new JwtAuthenticationFilter().getJwtFromRequest(request);
 		String studentId = new JwtTokenProvider().getUserIdFromJWT(jwtToken);
 		List<Classroom> classrooms = classroomService.getAllClassStudentAttend(studentId);
-		return new ResponseEntity<List<Classroom>>(classrooms,HttpStatus.FOUND);
+		return new ResponseEntity<List<Classroom>>(classrooms,HttpStatus.OK);
 	}
 
 	@GetMapping("/student/classdetail")

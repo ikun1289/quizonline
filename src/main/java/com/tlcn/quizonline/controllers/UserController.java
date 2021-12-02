@@ -8,7 +8,6 @@ import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -36,8 +35,7 @@ public class UserController {
 		String userId = new JwtTokenProvider().getUserIdFromJWT(jwt);
 		
 		Optional<User> user = userService.getUserById(userId);
-		if(user.isPresent())
-		{
+		if(user.isPresent()){
 			User u = user.get();
 			u.setId(null);
 			u.setPassword(null);
@@ -53,8 +51,7 @@ public class UserController {
 	{
 		String oldPass;
 		String newPass;
-		try
-		{
+		try{
 			oldPass = userMap.get("oldpass");
 			newPass = userMap.get("newpass");
 		}
@@ -67,18 +64,15 @@ public class UserController {
 		String jwt = new JwtAuthenticationFilter().getJwtFromRequest(request);
 		String userId = new JwtTokenProvider().getUserIdFromJWT(jwt);
 		Optional<User> user = userService.getUserById(userId);
-		if(user.isPresent())
-		{
+		if(user.isPresent()){
 			User uChangePass = user.get();
 			String passwd = uChangePass.getPassword();
-			if(passwordEncoder.matches(oldPass, passwd))
-			{
+			if(passwordEncoder.matches(oldPass, passwd)){
 				uChangePass.setPassword(newPass);
 				userService.addNewUser(uChangePass);
 				return ResponseEntity.status(HttpStatus.OK).body("Change pass complete!");
 			}
-			else
-			{
+			else{
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Old password not match!");
 			}
 				
@@ -88,23 +82,36 @@ public class UserController {
 		}
 	}
 	
-//	@PostMapping("/user/editprofile")
-//	public ResponseEntity<?> editProfile(HttpServletRequest request, @RequestBody User userMap)
-//	{
-//		String jwt = new JwtAuthenticationFilter().getJwtFromRequest(request);
-//		String userId = new JwtTokenProvider().getUserIdFromJWT(jwt);
-//		if(validateUser(userMap))
-//		{
-//			
-//		}
-//	}
-//
-//	private Boolean validateUser(User userMap) {
-//		if(userMap.getName().isEmpty() && userMap.getName().length()<6)
-//			return false;
-//		if(userMap.get)
-//		return true;
-//	}
+	@PostMapping("/user/editprofile")
+	public ResponseEntity<?> editProfile(HttpServletRequest request, @RequestBody User userMap)
+	{
+		String jwt = new JwtAuthenticationFilter().getJwtFromRequest(request);
+		String userId = new JwtTokenProvider().getUserIdFromJWT(jwt);
+		if(validateUser(userMap))
+		{
+			Optional<User> user = userService.getUserById(userId);
+			if(user.isPresent())
+			{
+				User u = user.get();
+				u.setName(userMap.getName());
+				u.setPhone(userMap.getPhone());
+				u.setAddress(userMap.getAddress());
+				u.setGender(userMap.getGender());
+				userService.addNewUser(u);
+			}
+			return ResponseEntity.status(HttpStatus.OK).body("Chỉnh sửa thông tin thành công!");
+			
+		}
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Trường thông tin nhập không hợp lệ");
+	}
+
+	private Boolean validateUser(User userMap) {
+		if(userMap.getName().isEmpty() || userMap.getName().length()<6)
+			return false;
+		if(userMap.getEmail().isEmpty() || userMap.getEmail().length()<6)
+			return false;
+		return true;
+	}
 	
 	@GetMapping("/student/authorize")
 	public ResponseEntity<?> authorizeStudent()
