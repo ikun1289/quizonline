@@ -37,7 +37,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
                 // Lấy id user từ chuỗi jwt
                 String userId = tokenProvider.getUserIdFromJWT(jwt);
-                System.out.println("Authorization with userId: "+userId);
                 // Lấy thông tin người dùng từ id
                 UserDetails userDetails = customUserDetailsService.loadUserByID(userId);
                 if(userDetails != null) {

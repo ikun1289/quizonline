@@ -19,4 +19,6 @@ public interface ClassroomRepository extends MongoRepository<Classroom,String>{
 	
 	public List<Classroom> findByStudents(String id);
 	
+	public Classroom findBySections(ObjectId id);
+	
 }

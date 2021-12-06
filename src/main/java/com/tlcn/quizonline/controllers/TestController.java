@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.tlcn.quizonline.JWT.JwtAuthenticationFilter;
 import com.tlcn.quizonline.JWT.JwtTokenProvider;
 import com.tlcn.quizonline.models.Answer;
+import com.tlcn.quizonline.models.ClassSection;
 import com.tlcn.quizonline.models.Classroom;
 import com.tlcn.quizonline.models.Quiz;
 import com.tlcn.quizonline.models.Test;
@@ -29,6 +30,7 @@ import com.tlcn.quizonline.models.TestResult;
 import com.tlcn.quizonline.models.User;
 import com.tlcn.quizonline.payload.ScoreStatistics;
 import com.tlcn.quizonline.payload.StudentScore;
+import com.tlcn.quizonline.services.ClassSectionService;
 import com.tlcn.quizonline.services.ClassroomService;
 import com.tlcn.quizonline.services.TestResultService;
 import com.tlcn.quizonline.services.TestService;
@@ -41,6 +43,8 @@ public class TestController {
 	TestService testService;
 	@Autowired
 	UserService userService;
+	@Autowired
+	ClassSectionService sectionService;
 	@Autowired
 	ClassroomService ClassroomService;
 	@Autowired
@@ -207,12 +211,27 @@ public class TestController {
 	}
 
 	@GetMapping("/teacher/get-score-statistics")
-	public ResponseEntity<?> getScoreStats(@RequestParam("testId") String testId, @RequestParam("classId") String classId) {
+	public ResponseEntity<?> getScoreStats(@RequestParam("testId") String testId) {
 		Optional<Test> test = testService.getTestById(testId);
 		if(test.isPresent())
 		{
 			List<TestResult> testResults = testResultService.getTestResultByTestId(testId);
-			List<String> studentsId = ClassroomService.getClassroomByID(classId).getStudents();
+			ClassSection section = sectionService.getSectionByTestId(testId);
+			List<String> studentsId = new ArrayList<>();
+			if(section !=null)
+			{
+				Classroom classroom =  ClassroomService.getClassBySectionId(section.get_id().toHexString());
+				if(classroom!=null)
+				{
+					studentsId = classroom.getStudents();
+				}
+				else {
+					return new ResponseEntity<String>("Lớp mà bài kiểm tra này nằm trong đã bị xóa", HttpStatus.BAD_REQUEST);
+				}
+			}
+			else {
+				return new ResponseEntity<String>("Chương mà bài kiểm tra này nằm trong đã bị xóa", HttpStatus.BAD_REQUEST);
+			}
 			
 			//thông kê điểm
 			ScoreStatistics scoreStatistics = new ScoreStatistics();
@@ -232,7 +251,6 @@ public class TestController {
 				score.setStudentName(result.getStudent().getName());
 				score.setNumbCorrect(result.getScore());
 				
-				System.out.println(hashMap);
 				
 				Integer checkExist = hashMap.get(score.getStudentId());
 				

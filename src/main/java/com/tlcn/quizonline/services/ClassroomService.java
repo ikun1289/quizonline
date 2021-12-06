@@ -3,6 +3,7 @@ package com.tlcn.quizonline.services;
 import java.util.List;
 import java.util.Optional;
 
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -76,5 +77,11 @@ public class ClassroomService {
 	public List<Classroom> getAllClassStudentAttend(String studentId) {
 		Query query = new Query(Criteria.where("students").all(studentId));
 		return this.mongoTemplate.find(query, Classroom.class);
+	}
+	
+	public Classroom getClassBySectionId(String sectionId) {
+//		Query query = new Query(Criteria.where("sections").in(sectionId));
+//		return this.mongoTemplate.findOne(query, Classroom.class);
+		return cRepository.findBySections(new ObjectId(sectionId));
 	}
 }

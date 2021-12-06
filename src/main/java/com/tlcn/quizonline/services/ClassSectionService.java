@@ -57,5 +57,11 @@ public class ClassSectionService {
 		classSectionRepository.save(s);
 		
 	}
+	
+	public ClassSection getSectionByTestId(String testId) {
+//		Query query = new Query(Criteria.where("tests").in(testId));
+//		return this.mongoTemplate.findOne(query, ClassSection.class);
+		return classSectionRepository.findByTests(new ObjectId(testId));
+	}
 
 }
