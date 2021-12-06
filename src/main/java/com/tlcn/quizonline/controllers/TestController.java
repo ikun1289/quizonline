@@ -1,7 +1,9 @@
 package com.tlcn.quizonline.controllers;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,8 +27,12 @@ import com.tlcn.quizonline.models.Quiz;
 import com.tlcn.quizonline.models.Test;
 import com.tlcn.quizonline.models.TestResult;
 import com.tlcn.quizonline.models.User;
+import com.tlcn.quizonline.payload.ScoreStatistics;
+import com.tlcn.quizonline.payload.StudentScore;
+import com.tlcn.quizonline.services.ClassroomService;
 import com.tlcn.quizonline.services.TestResultService;
 import com.tlcn.quizonline.services.TestService;
+import com.tlcn.quizonline.services.UserService;
 
 @RestController
 public class TestController {
@@ -34,8 +40,14 @@ public class TestController {
 	@Autowired
 	TestService testService;
 	@Autowired
+	UserService userService;
+	@Autowired
+	ClassroomService ClassroomService;
+	@Autowired
 	TestResultService testResultService;
 
+	
+	//student
 	@GetMapping("/student/starttest")
 	public ResponseEntity<?> startDoTest(HttpServletRequest request, @RequestParam("id") String testId) {
 
@@ -133,6 +145,8 @@ public class TestController {
 
 
 	}
+	
+	// end student
 
 	private int checkAnswer(Quiz p, Quiz q) {
 		int numCorrect = 0;
@@ -156,12 +170,7 @@ public class TestController {
 		return 1;
 	}
 
-	@GetMapping("/student/testGetTest")
-	public ResponseEntity<List<Classroom>> testGetTest() {
-		System.out.println("testGetTest.../n");
-
-		return new ResponseEntity<List<Classroom>>(HttpStatus.OK);
-	}
+	//teacher
 
 	@PostMapping("/teacher/addNewTest")
 	public ResponseEntity<String> addNewTest(@RequestParam("sectionId") String sectionid, @RequestBody Test test) {
@@ -181,10 +190,72 @@ public class TestController {
 		}
 	} 
 	
-	@GetMapping("/listscore")
+	@GetMapping("/teacher/get-test")
+	public ResponseEntity<?> getTest(@RequestParam("testId") String testId){
+		Optional<Test> test = testService.getTestById(testId);
+		if(test.isPresent())
+		{
+			return new ResponseEntity<Test>(test.get(),HttpStatus.OK);
+		}
+		return new ResponseEntity<String>("Bài kiểm tra không tồn tại",HttpStatus.NOT_FOUND);
+	}
+	
+	@GetMapping("/teacher/listscore")
 	public ResponseEntity<?> listscore(@RequestParam("testId") String testId) {
 		List<TestResult> testResults = testResultService.getTestResultByTestId(testId);
 		return new ResponseEntity<List<TestResult>>(testResults, HttpStatus.OK);
 	}
 
+	@GetMapping("/teacher/get-score-statistics")
+	public ResponseEntity<?> getScoreStats(@RequestParam("testId") String testId, @RequestParam("classId") String classId) {
+		Optional<Test> test = testService.getTestById(testId);
+		if(test.isPresent())
+		{
+			List<TestResult> testResults = testResultService.getTestResultByTestId(testId);
+			List<String> studentsId = ClassroomService.getClassroomByID(classId).getStudents();
+			
+			//thông kê điểm
+			ScoreStatistics scoreStatistics = new ScoreStatistics();
+			scoreStatistics.setNumberOfQuiz(test.get().getQuizs().size());
+			scoreStatistics.setTestId(testId);
+			scoreStatistics.setTestName(test.get().getName());
+			scoreStatistics.setNumbStudentInClass(studentsId.size());
+			
+			HashMap<String, Integer> hashMap = new HashMap<>();
+			
+			List<StudentScore> scores = new ArrayList<StudentScore>();
+			
+			for (TestResult result : testResults) {
+				StudentScore score = new StudentScore();
+				score.setStudentId(result.getStudent().getId().toHexString());
+				score.setRetry(1);
+				score.setStudentName(result.getStudent().getName());
+				score.setNumbCorrect(result.getScore());
+				
+				System.out.println(hashMap);
+				
+				Integer checkExist = hashMap.get(score.getStudentId());
+				
+				if(checkExist == null) {
+					hashMap.put(score.getStudentId(), scores.size());
+					scores.add(score);
+				}else {
+					score.setRetry(score.getRetry()+1);
+					if(scores.get(checkExist).getNumbCorrect() > score.getNumbCorrect()) {
+						score.setNumbCorrect(scores.get(checkExist).getNumbCorrect());
+					}
+					scores.set(checkExist, score);
+				}
+			}
+			scoreStatistics.setScores(scores);
+			return new ResponseEntity<ScoreStatistics>(scoreStatistics, HttpStatus.OK);
+		}
+		return new ResponseEntity<String>("Bài kiểm tra không tồn tại", HttpStatus.NOT_FOUND);
+	}
+	//end teacher
+	
+	
+	
+	
+	
 }
