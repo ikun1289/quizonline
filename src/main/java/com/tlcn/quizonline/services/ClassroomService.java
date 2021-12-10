@@ -48,14 +48,6 @@ public class ClassroomService {
 		cRepository.deleteById(classId);
 	}
 	
-	public Classroom updateClassName(String name, String classId)
-	{
-		Query query = new Query(Criteria.where("id").is(classId));
-		Update update = new Update().set("name", name);
-		return this.mongoTemplate.findAndModify(query, update, Classroom.class);
-		//this.mongoTemplate.find(query, Classroom.class);
-	}
-	
 	public List<Classroom> getClassesByStudentID(String id) {
 		return cRepository.findByStudents(id);
 	}
@@ -84,4 +76,12 @@ public class ClassroomService {
 //		return this.mongoTemplate.findOne(query, Classroom.class);
 		return cRepository.findBySections(new ObjectId(sectionId));
 	}
+	
+	public void editClassName(String classId, String teacherId, String name) {
+		Query query = new Query(Criteria.where("id").is(classId).andOperator(Criteria.where("teacherID").is(teacherId)));
+		Update update = new Update().set("name",name);
+		this.mongoTemplate.findAndModify(query, update, Classroom.class);
+		
+	}
+	
 }

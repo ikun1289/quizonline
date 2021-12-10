@@ -27,7 +27,12 @@ public class SectionController {
 	public ResponseEntity<String> addClassSection(@RequestParam("classId") String classId,
 			@RequestBody ClassSection requestBody)
 	{
-		classSectionService.addNewClassSection(requestBody, classId);
+		try {
+			classSectionService.addNewClassSection(requestBody, classId);
+		}catch (Exception e) {
+			return new ResponseEntity<String>("Đã xảy ra lỗi",HttpStatus.BAD_REQUEST);
+		}
+		
 		return new ResponseEntity<String>("Thêm chương mới thành công",HttpStatus.CREATED);
 	}
 	

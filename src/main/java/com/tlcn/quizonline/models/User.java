@@ -23,6 +23,7 @@ public class User {
 	private Boolean gender;//true == male
 	private String role;
 	private Boolean enable;
+	private Activity activity;
 	
 	public User() {
 		super();
@@ -41,6 +42,7 @@ public class User {
 		this.gender = gender;
 		this.role = role;
 		this.enable = false;
+		this.activity = new Activity();
 	}
 	public User(String userName, String passwd, String email, String name,String role) {
 		super();
@@ -53,6 +55,7 @@ public class User {
 		this.gender = false;
 		this.role = role;
 		this.enable = false;
+		this.activity = new Activity();
 	}
 	
 }

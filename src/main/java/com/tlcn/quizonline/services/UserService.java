@@ -120,4 +120,11 @@ public class UserService implements UserDetailsService {
 		Update update = new Update().set("enable", true);
 		return this.mongoTemplate.findAndModify(query, update, User.class);
 	}
+	
+	public void updateActivity(String userId,String classId) {
+		Query query = new Query(Criteria.where("id").is(userId));
+		Update update = new Update().push("activity", classId);
+		this.mongoTemplate.findAndModify(query, update, User.class);
+		
+	}
 }
