@@ -37,7 +37,6 @@ public class UserController {
 		Optional<User> user = userService.getUserById(userId);
 		if(user.isPresent()){
 			User u = user.get();
-			u.setId(null);
 			u.setPassword(null);
 			return new ResponseEntity<User>(user.get(),HttpStatus.OK);
 		}

@@ -114,6 +114,7 @@ public class ClassroomPageController {
 		if (c != null && c.getTeacherID().equals(teacherId)) {
 			ClassDetail classDetail = new ClassDetail();
 			classDetail.setName(c.getName());
+			classDetail.setListStudent(userService.listStudent(c.getStudents()));
 			List<ClassSectionDetail> details = new ArrayList<>();
 			for (String sectionId : c.getSections()) {
 				ClassSectionDetail detail = new ClassSectionDetail();
@@ -141,7 +142,37 @@ public class ClassroomPageController {
 		return new ResponseEntity<String>("Lớp học không tồn tại hoặc bạn không nằm trong lớp học này",
 				HttpStatus.BAD_REQUEST);
 	}
-
+	
+	@PostMapping("/teacher/add-student-to-class")
+	public ResponseEntity<?> addStudentToClass(HttpServletRequest request, @RequestParam("id") String classId, @RequestBody Map<String, String> body) {
+		String jwtToken = new JwtAuthenticationFilter().getJwtFromRequest(request);
+		String teacherId = new JwtTokenProvider().getUserIdFromJWT(jwtToken);
+		String studentId = body.get("studentId");
+		Optional<User> checkStudent = userService.getUserById(studentId);
+		if(!checkStudent.isPresent() || !checkStudent.get().getRole().equals("student")) {
+			return new ResponseEntity<String>("Học sinh không tồn tại",
+					HttpStatus.BAD_REQUEST);
+		}
+		Classroom c = classroomService.addNewStudentToClass(studentId, classId, teacherId);
+		if(c!=null) {
+			return new ResponseEntity<String>("Thêm học sinh mới thành công", HttpStatus.OK);
+		}
+		return new ResponseEntity<String>("Lớp học không tồn tại hoặc bạn không nằm trong lớp học này",
+				HttpStatus.BAD_REQUEST);
+	}
+	
+	@PostMapping("/teacher/delete-student-in-class")
+	public ResponseEntity<?> deleteStudentFromClass(HttpServletRequest request, @RequestParam("id") String classId, @RequestBody Map<String, String> body) {
+		String jwtToken = new JwtAuthenticationFilter().getJwtFromRequest(request);
+		String teacherId = new JwtTokenProvider().getUserIdFromJWT(jwtToken);
+		String studentId = body.get("studentId");
+		Classroom c = classroomService.deleteStudentInClass(studentId, classId, teacherId);
+		if(c!=null) {
+			return new ResponseEntity<String>("Xóa học sinh mới thành công", HttpStatus.OK);
+		}
+		return new ResponseEntity<String>("Lớp học không tồn tại hoặc bạn không nằm trong lớp học này",
+				HttpStatus.BAD_REQUEST);
+	}
 	// --end of teacher--
 
 	// student

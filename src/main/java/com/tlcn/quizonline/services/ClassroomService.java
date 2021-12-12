@@ -84,4 +84,18 @@ public class ClassroomService {
 		
 	}
 	
+	public Classroom addNewStudentToClass(String studentId, String classId, String teacherId) {
+		Query query = new Query(Criteria.where("id").is(classId).andOperator(Criteria.where("teacherID").is(teacherId)));
+		Update update = new Update().addToSet("students", studentId);
+		return this.mongoTemplate.findAndModify(query, update, Classroom.class);
+	}
+	
+	public Classroom deleteStudentInClass(String studentId, String classId, String teacherId) {
+		Query query = new Query(Criteria.where("id").is(classId).andOperator(Criteria.where("teacherID").is(teacherId)));
+		Update update = new Update().pull("students", studentId);
+		return this.mongoTemplate.findAndModify(query, update, Classroom.class);
+	}
+	
+	
+	
 }

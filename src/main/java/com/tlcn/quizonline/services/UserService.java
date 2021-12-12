@@ -127,4 +127,10 @@ public class UserService implements UserDetailsService {
 		this.mongoTemplate.findAndModify(query, update, User.class);
 		
 	}
+	
+	public List<User> listStudent(List<String> listId){
+		Query query = new Query(Criteria.where("id").in(listId));
+		query.fields().exclude("password");
+		return this.mongoTemplate.find(query, User.class);
+	}
 }
