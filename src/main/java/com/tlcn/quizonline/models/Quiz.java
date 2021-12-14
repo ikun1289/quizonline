@@ -15,7 +15,7 @@ import lombok.Data;
 @Data
 public class Quiz {
 	@Id
-	private ObjectId _id = new ObjectId();
+	private ObjectId id = new ObjectId();
 	private String content;
 	private boolean quizType; // true nếu muốn làm kiểu quiz multi với single answer
 	@JsonUnwrapped
@@ -58,11 +58,11 @@ public class Quiz {
 	}
 
 	public ObjectId get_id() {
-		return _id;
+		return id;
 	}
 
 	public void set_id(ObjectId _id) {
-		this._id = _id;
+		this.id = _id;
 	}
 
 }

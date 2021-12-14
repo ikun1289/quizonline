@@ -191,6 +191,9 @@ public class ClassroomPageController {
 		String studentId = new JwtTokenProvider().getUserIdFromJWT(jwtToken);
 		Classroom c = classroomService.getClassroomByID(classId);
 		if (c != null && c.getStudents().contains(studentId)) {
+			ClassDetail classDetail = new ClassDetail();
+			classDetail.setName(c.getName());
+			classDetail.setListStudent(userService.listStudent(c.getStudents()));
 			List<ClassSectionDetail> details = new ArrayList<>();
 			for (String sectionId : c.getSections()) {
 				ClassSectionDetail detail = new ClassSectionDetail();
@@ -212,7 +215,8 @@ public class ClassroomPageController {
 					details.add(detail);
 				}
 			}
-			return new ResponseEntity<List<ClassSectionDetail>>(details, HttpStatus.OK);
+			classDetail.setSections(details);
+			return new ResponseEntity<ClassDetail>(classDetail, HttpStatus.OK);
 		}
 		return new ResponseEntity<String>("Lớp học không tồn tại hoặc bạn không nằm trong lớp học này",
 				HttpStatus.BAD_REQUEST);

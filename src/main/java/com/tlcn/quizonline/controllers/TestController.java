@@ -50,8 +50,7 @@ public class TestController {
 	@Autowired
 	TestResultService testResultService;
 
-	
-	//student
+	// student
 	@GetMapping("/student/starttest")
 	public ResponseEntity<?> startDoTest(HttpServletRequest request, @RequestParam("id") String testId) {
 
@@ -92,12 +91,12 @@ public class TestController {
 		Optional<Test> test;
 		int score = 0;
 
-		//check if test exist
+		// check if test exist
 		test = testService.getTestById(testId);
 		if (!test.isPresent()) {
 			return new ResponseEntity<String>("This test must have been deleted or smt.", HttpStatus.NOT_FOUND);
 		}
-		
+
 		// check if u have started doing this test or not
 		List<TestResult> testResults = testResultService.getTestResultByTestAndStudent(testId, studentId);
 		if (testResults.size() == 0) {
@@ -105,13 +104,11 @@ public class TestController {
 			return new ResponseEntity<String>("You havent started doing this test", HttpStatus.BAD_REQUEST);
 		}
 		testResult = testResults.get(testResults.size() - 1);
-		
-		//check if numbRetry
-		if(testResult.getFinishTime()>0 )
-		{
+
+		// check if numbRetry
+		if (testResult.getFinishTime() > 0) {
 			return new ResponseEntity<String>("You can only submit once", HttpStatus.BAD_REQUEST);
 		}
-			
 
 		// check if time is acceptable
 		Date date = new Date(testResult.getStartTime());
@@ -131,14 +128,16 @@ public class TestController {
 			List<Quiz> quizSubmit = quizs.get();
 			// for mỗi quiz được nộp check quiz đó trong danh sách quiz của test
 			for (Quiz p : test.get().getQuizs()) {
-				Quiz q = quizSubmit.stream().filter(quiz -> p.get_id().toHexString().equals(quiz.get_id().toHexString())).findFirst().orElse(null);
+				Quiz q = quizSubmit.stream()
+						.filter(quiz -> p.get_id().toHexString().equals(quiz.get_id().toHexString())).findFirst()
+						.orElse(null);
 				if (p != null) {
 					// check answer của quiz được nộp
-					score += checkAnswer(p,q); //p là quiz dưới db, q là quiz được submit
+					score += checkAnswer(p, q); // p là quiz dưới db, q là quiz được submit
 				}
 			}
 		}
-		//update testResult
+		// update testResult
 		testResult.setFinishTime(submitDate.getTime());
 		testResult.setScore(score);
 		System.out.println("Submit your test success!");
@@ -147,9 +146,8 @@ public class TestController {
 		return new ResponseEntity<String>("Submit your test success!\nTime in seconds: " + diffSeconds + " seconds.",
 				HttpStatus.ACCEPTED);
 
-
 	}
-	
+
 	// end student
 
 	private int checkAnswer(Quiz p, Quiz q) {
@@ -168,13 +166,87 @@ public class TestController {
 				numCorrect++;
 			}
 		}
-		System.out.println(q.getAnswers().size() +" "+numCorrect);
-		if(numCorrect != q.getAnswers().size())
+		System.out.println(q.getAnswers().size() + " " + numCorrect);
+		if (numCorrect != q.getAnswers().size())
 			return 0;
 		return 1;
 	}
 
-	//teacher
+	@GetMapping("/student/get-test")
+	public ResponseEntity<?> getTestStudent(HttpServletRequest request, @RequestParam("testId") String testId) {
+		String jwt = new JwtAuthenticationFilter().getJwtFromRequest(request);
+		String studentId = new JwtTokenProvider().getUserIdFromJWT(jwt);
+		Optional<Test> test = testService.getTestById(testId);
+		if (test.isPresent()) {
+			ClassSection section = sectionService.getSectionByTestId(testId);
+			if (section != null) {
+				Classroom classroom = ClassroomService.getClassBySectionId(section.get_id().toHexString());
+				if (classroom != null && classroom.getStudents().contains(studentId)) {
+					Test t = test.get();
+					t.setQuizs(null);
+					return new ResponseEntity<Test>(t, HttpStatus.OK);
+				} else {
+					return new ResponseEntity<String>("Lớp mà bài kiểm tra này nằm trong đã bị xóa hoặc không tồn tại",
+							HttpStatus.BAD_REQUEST);
+				}
+			} else {
+				return new ResponseEntity<String>("Chương mà bài kiểm tra này nằm trong đã bị xóa hoặc không tồn tại",
+						HttpStatus.BAD_REQUEST);
+			}
+
+		}
+		return new ResponseEntity<String>("Bài kiểm tra không tồn tại hoặc đã bị xóa", HttpStatus.NOT_FOUND);
+	}
+
+	@GetMapping("/student/get-score-statistics")
+	public ResponseEntity<?> getScoreStatsStudent(HttpServletRequest request, @RequestParam("testId") String testId) {
+		String jwt = new JwtAuthenticationFilter().getJwtFromRequest(request);
+		String studentId = new JwtTokenProvider().getUserIdFromJWT(jwt);
+		Optional<Test> test = testService.getTestById(testId);
+		if (test.isPresent()) {
+			List<TestResult> testResults = testResultService.getTestResultByTestAndStudent(testId, studentId);
+			ClassSection section = sectionService.getSectionByTestId(testId);
+			List<String> studentsId = new ArrayList<>();
+			if (section != null) {
+				Classroom classroom = ClassroomService.getClassBySectionId(section.get_id().toHexString());
+				if (classroom != null) {
+					studentsId = classroom.getStudents();
+				} else {
+					return new ResponseEntity<String>("Lớp mà bài kiểm tra này nằm trong đã bị xóa hoặc không tồn tại",
+							HttpStatus.BAD_REQUEST);
+				}
+			} else {
+				return new ResponseEntity<String>("Chương mà bài kiểm tra này nằm trong đã bị xóa hoặc không tồn tại",
+						HttpStatus.BAD_REQUEST);
+			}
+
+			// thông kê điểm
+			ScoreStatistics scoreStatistics = new ScoreStatistics();
+			scoreStatistics.setNumberOfQuiz(test.get().getQuizs().size());
+			scoreStatistics.setTestId(testId);
+			scoreStatistics.setTestName(test.get().getName());
+			scoreStatistics.setNumbStudentInClass(studentsId.size());
+
+			List<StudentScore> scores = new ArrayList<StudentScore>();
+
+			for (TestResult result : testResults) {
+				StudentScore score = new StudentScore();
+				score.setStudentId(result.getStudent().getId().toHexString());
+				score.setRetry(1);
+				score.setStudentName(result.getStudent().getName());
+				score.setNumbCorrect(result.getScore());
+				score.setTime((result.getFinishTime() - result.getStartTime()));
+
+				scores.add(score);
+
+			}
+			scoreStatistics.setScores(scores);
+			return new ResponseEntity<ScoreStatistics>(scoreStatistics, HttpStatus.OK);
+		}
+		return new ResponseEntity<String>("Bài kiểm tra không tồn tại", HttpStatus.NOT_FOUND);
+	}
+
+	// teacher
 
 	@PostMapping("/teacher/addNewTest")
 	public ResponseEntity<String> addNewTest(@RequestParam("sectionId") String sectionid, @RequestBody Test test) {
@@ -182,7 +254,7 @@ public class TestController {
 		return new ResponseEntity<String>("Thêm bài kiểm tra mới thành công", HttpStatus.CREATED);
 
 	}
-	
+
 	@PostMapping("/teacher/deleteTest")
 	public ResponseEntity<String> deleteTest(@RequestParam("sectionId") String sectionid) {
 
@@ -192,18 +264,32 @@ public class TestController {
 		} catch (Exception e) {
 			return new ResponseEntity<String>("Đã xảy ra lỗi", HttpStatus.BAD_REQUEST);
 		}
-	} 
-	
-	@GetMapping("/teacher/get-test")
-	public ResponseEntity<?> getTest(@RequestParam("testId") String testId){
-		Optional<Test> test = testService.getTestById(testId);
-		if(test.isPresent())
-		{
-			return new ResponseEntity<Test>(test.get(),HttpStatus.OK);
-		}
-		return new ResponseEntity<String>("Bài kiểm tra không tồn tại",HttpStatus.NOT_FOUND);
 	}
-	
+
+	@GetMapping("/teacher/get-test")
+	public ResponseEntity<?> getTest(HttpServletRequest request, @RequestParam("testId") String testId) {
+		String jwt = new JwtAuthenticationFilter().getJwtFromRequest(request);
+		String teacherId = new JwtTokenProvider().getUserIdFromJWT(jwt);
+		Optional<Test> test = testService.getTestById(testId);
+		if (test.isPresent()) {
+			ClassSection section = sectionService.getSectionByTestId(testId);
+			if (section != null) {
+				Classroom classroom = ClassroomService.getClassBySectionId(section.get_id().toHexString());
+				if (classroom != null && classroom.getTeacherID().equals(teacherId)) {
+					return new ResponseEntity<Test>(test.get(), HttpStatus.OK);
+				} else {
+					return new ResponseEntity<String>("Lớp mà bài kiểm tra này nằm trong đã bị xóa hoặc không tồn tại",
+							HttpStatus.BAD_REQUEST);
+				}
+			} else {
+				return new ResponseEntity<String>("Chương mà bài kiểm tra này nằm trong đã bị xóa hoặc không tồn tại",
+						HttpStatus.BAD_REQUEST);
+			}
+
+		}
+		return new ResponseEntity<String>("Bài kiểm tra không tồn tại hoặc đã bị xóa", HttpStatus.NOT_FOUND);
+	}
+
 	@GetMapping("/teacher/listscore")
 	public ResponseEntity<?> listscore(@RequestParam("testId") String testId) {
 		List<TestResult> testResults = testResultService.getTestResultByTestId(testId);
@@ -213,53 +299,50 @@ public class TestController {
 	@GetMapping("/teacher/get-score-statistics")
 	public ResponseEntity<?> getScoreStats(@RequestParam("testId") String testId) {
 		Optional<Test> test = testService.getTestById(testId);
-		if(test.isPresent())
-		{
+		if (test.isPresent()) {
 			List<TestResult> testResults = testResultService.getTestResultByTestId(testId);
 			ClassSection section = sectionService.getSectionByTestId(testId);
 			List<String> studentsId = new ArrayList<>();
-			if(section !=null)
-			{
-				Classroom classroom =  ClassroomService.getClassBySectionId(section.get_id().toHexString());
-				if(classroom!=null)
-				{
+			if (section != null) {
+				Classroom classroom = ClassroomService.getClassBySectionId(section.get_id().toHexString());
+				if (classroom != null) {
 					studentsId = classroom.getStudents();
+				} else {
+					return new ResponseEntity<String>("Lớp mà bài kiểm tra này nằm trong đã bị xóa hoặc không tồn tại",
+							HttpStatus.BAD_REQUEST);
 				}
-				else {
-					return new ResponseEntity<String>("Lớp mà bài kiểm tra này nằm trong đã bị xóa", HttpStatus.BAD_REQUEST);
-				}
+			} else {
+				return new ResponseEntity<String>("Chương mà bài kiểm tra này nằm trong đã bị xóa hoặc không tồn tại",
+						HttpStatus.BAD_REQUEST);
 			}
-			else {
-				return new ResponseEntity<String>("Chương mà bài kiểm tra này nằm trong đã bị xóa", HttpStatus.BAD_REQUEST);
-			}
-			
-			//thông kê điểm
+
+			// thông kê điểm
 			ScoreStatistics scoreStatistics = new ScoreStatistics();
 			scoreStatistics.setNumberOfQuiz(test.get().getQuizs().size());
 			scoreStatistics.setTestId(testId);
 			scoreStatistics.setTestName(test.get().getName());
 			scoreStatistics.setNumbStudentInClass(studentsId.size());
-			
+
 			HashMap<String, Integer> hashMap = new HashMap<>();
-			
+
 			List<StudentScore> scores = new ArrayList<StudentScore>();
-			
+
 			for (TestResult result : testResults) {
 				StudentScore score = new StudentScore();
 				score.setStudentId(result.getStudent().getId().toHexString());
 				score.setRetry(1);
 				score.setStudentName(result.getStudent().getName());
 				score.setNumbCorrect(result.getScore());
-				
-				
+				score.setTime(result.getFinishTime() - result.getStartTime());
+
 				Integer checkExist = hashMap.get(score.getStudentId());
-				
-				if(checkExist == null) {
+
+				if (checkExist == null) {
 					hashMap.put(score.getStudentId(), scores.size());
 					scores.add(score);
-				}else {
-					score.setRetry(score.getRetry()+1);
-					if(scores.get(checkExist).getNumbCorrect() > score.getNumbCorrect()) {
+				} else {
+					score.setRetry(score.getRetry() + 1);
+					if (scores.get(checkExist).getNumbCorrect() > score.getNumbCorrect()) {
 						score.setNumbCorrect(scores.get(checkExist).getNumbCorrect());
 					}
 					scores.set(checkExist, score);
@@ -270,10 +353,6 @@ public class TestController {
 		}
 		return new ResponseEntity<String>("Bài kiểm tra không tồn tại", HttpStatus.NOT_FOUND);
 	}
-	//end teacher
-	
-	
-	
-	
-	
+	// end teacher
+
 }

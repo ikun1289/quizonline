@@ -9,5 +9,5 @@ public class StudentScore {
 	private String studentName;
 	private int numbCorrect;
 	private int retry =0;
-	
+	private long time =0; //in milliseconds
 }
