@@ -61,6 +61,21 @@ public class TestController {
 			String studentId = new JwtTokenProvider().getUserIdFromJWT(jwt);
 
 			List<TestResult> testResults = testResultService.getTestResultByTestAndStudent(testId, studentId);
+			if(testResults.size()>0)
+			{
+				TestResult t = testResults.get(testResults.size()-1);
+				if(t.getFinishTime()<=0) {
+					Date date = new Date(t.getStartTime());
+					Date continueDate = new Date();
+					long diff = continueDate.getTime() - date.getTime();
+					long diffSeconds = diff / 1000;
+					if (diffSeconds < test.get().getTime() * 60) {
+						Test continueT = test.get();
+						continueT.setTime(continueT.getTime() - (int)diffSeconds/60);
+						return new ResponseEntity<Test>(continueT, HttpStatus.OK);
+					}
+				}
+			}
 			if (testResults.size() < test.get().getNumbRetry()) {
 				User u = new User();
 				u.setId(new ObjectId(studentId));
@@ -120,7 +135,7 @@ public class TestController {
 			System.out.println("Submit failed");
 			return new ResponseEntity<String>(
 					"Submit failed cuz you take too much time!\nTime in seconds: " + diffSeconds + " seconds.",
-					HttpStatus.ACCEPTED);
+					HttpStatus.BAD_REQUEST);
 		}
 
 		// if everything is ok, time to check the answer submitted
@@ -144,7 +159,7 @@ public class TestController {
 		System.out.println(testResult);
 		testResultService.saveTestResult(testResult);
 		return new ResponseEntity<String>("Submit your test success!\nTime in seconds: " + diffSeconds + " seconds.",
-				HttpStatus.ACCEPTED);
+				HttpStatus.OK);
 
 	}
 
@@ -156,7 +171,7 @@ public class TestController {
 			if (answer.isCorrect()) {
 				Answer kq = null;
 				kq = q.getAnswers().stream()
-						.filter(answer2 -> answer.get_id().toHexString().equals(answer2.get_id().toHexString()))
+						.filter(answer2 -> answer.getId().toHexString().equals(answer2.getId().toHexString()))
 						.findFirst().orElse(null);
 				System.out.println("\nchecking answer...");
 				System.out.println(answer);
