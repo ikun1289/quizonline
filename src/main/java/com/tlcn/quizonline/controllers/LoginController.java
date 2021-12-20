@@ -71,7 +71,7 @@ public class LoginController {
 	@PostMapping("/register")
 	public ResponseEntity<GeneralResponse> registerUser(@RequestBody User registerRequrest) {
 		System.out.println(registerRequrest.toString());
-		if (validateUserInfor(registerRequrest)) {
+		if (!validateUserInfor(registerRequrest)) {
 			return new ResponseEntity<>(new GeneralResponse("Những trường quan trọng không hợp lệ"),
 					HttpStatus.BAD_REQUEST);
 		}

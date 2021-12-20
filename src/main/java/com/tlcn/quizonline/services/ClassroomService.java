@@ -65,6 +65,12 @@ public class ClassroomService {
 		Update update = new Update().push("sections").each(sectionsId);
 		this.mongoTemplate.findAndModify(query, update, Classroom.class);
 	}
+	public void deleteSectionFromClass(String sectionsId, String classId)
+	{
+		Query query = new Query(Criteria.where("id").is(classId));
+		Update update = new Update().pull("sections",sectionsId);
+		this.mongoTemplate.findAndModify(query, update, Classroom.class);
+	}
 	
 	public List<Classroom> getAllClassStudentAttend(String studentId) {
 		Query query = new Query(Criteria.where("students").all(studentId));

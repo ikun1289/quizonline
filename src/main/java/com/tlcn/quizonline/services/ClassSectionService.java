@@ -35,9 +35,10 @@ public class ClassSectionService {
 		classroomService.addNewClassSectionToClass(classSection, classId);
 	}
 	
-	public void deleteSectionById(String sectionId)
+	public void deleteSectionById(String sectionId, String classId)
 	{
 		classSectionRepository.deleteById(sectionId);
+		classroomService.deleteSectionFromClass(sectionId, classId);
 	}
 	
 	public void addNewTestToSection(Test test, String sectionId) {

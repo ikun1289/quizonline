@@ -49,7 +49,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
 		http.cors().and().csrf().disable().authorizeRequests()
-		.antMatchers("/login","/register","/","/verify","/addRandomClass", "/student/testGetTest").permitAll()
+		.antMatchers("/login","/register","/","/verify").permitAll()
 		.antMatchers("/teacher/**").hasAuthority("teacher")
 		.antMatchers("/student/**").hasAuthority("student")
 		.anyRequest().authenticated(); // Tất cả các request khác đều cần phải xác

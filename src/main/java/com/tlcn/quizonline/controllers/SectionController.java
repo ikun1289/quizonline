@@ -15,13 +15,17 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.tlcn.quizonline.models.ClassSection;
+import com.tlcn.quizonline.models.Classroom;
 import com.tlcn.quizonline.services.ClassSectionService;
+import com.tlcn.quizonline.services.ClassroomService;
 
 @RestController
 public class SectionController {
 
 	@Autowired
 	ClassSectionService classSectionService;
+	@Autowired
+	ClassroomService ClassroomService;
 	
 	@PostMapping("/teacher/addClassSection")
 	public ResponseEntity<String> addClassSection(@RequestParam("classId") String classId,
@@ -33,7 +37,7 @@ public class SectionController {
 			return new ResponseEntity<String>("Đã xảy ra lỗi",HttpStatus.BAD_REQUEST);
 		}
 		
-		return new ResponseEntity<String>("Thêm chương mới thành công",HttpStatus.CREATED);
+		return new ResponseEntity<String>("Thêm chương mới thành công",HttpStatus.OK);
 	}
 	
 	@GetMapping("/teacher/section")
@@ -42,7 +46,7 @@ public class SectionController {
 		Optional<ClassSection> section= classSectionService.getClassSectionById(sectionId);
 		if(section.isPresent())
 		{
-			return new ResponseEntity<ClassSection>(section.get(),HttpStatus.FOUND);
+			return new ResponseEntity<ClassSection>(section.get(),HttpStatus.OK);
 		}
 		else
 		{
@@ -55,10 +59,12 @@ public class SectionController {
 	public ResponseEntity<?> deleteSection(HttpServletRequest request, @RequestParam("sectionId") String sectionId)
 	{
 		Optional<ClassSection> section= classSectionService.getClassSectionById(sectionId);
-		if(section.isPresent())
+		Classroom classroom = ClassroomService.getClassBySectionId(sectionId);
+		if(section.isPresent() && classroom!=null)
 		{
-			classSectionService.deleteSectionById(sectionId);
-			return new ResponseEntity<String>("Xóa chương thành công",HttpStatus.FOUND);
+			
+			classSectionService.deleteSectionById(sectionId, classroom.getId().toHexString());
+			return new ResponseEntity<String>("Xóa chương thành công",HttpStatus.OK);
 		}
 		else
 		{
