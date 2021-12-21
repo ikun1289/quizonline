@@ -65,7 +65,7 @@ public class UserController {
 			String passwd = uChangePass.getPassword();
 			if (passwordEncoder.matches(oldPass, passwd)) {
 				uChangePass.setPassword(newPass);
-				userService.editUser(uChangePass);
+				userService.addNewUser(uChangePass);
 				return ResponseEntity.status(HttpStatus.OK).body("Đổi mật khẩu thành công!");
 			} else {
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Mật khẩu cũ không khớp!");
@@ -88,7 +88,7 @@ public class UserController {
 			u.setPhone(userMap.getPhone());
 			u.setAddress(userMap.getAddress());
 			u.setGender(userMap.getGender());
-			userService.addNewUser(u);
+			userService.editUser(u);
 		}
 		return ResponseEntity.status(HttpStatus.OK).body("Chỉnh sửa thông tin thành công!");
 
