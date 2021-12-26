@@ -61,17 +61,16 @@ public class TestController {
 			String studentId = new JwtTokenProvider().getUserIdFromJWT(jwt);
 
 			List<TestResult> testResults = testResultService.getTestResultByTestAndStudent(testId, studentId);
-			if(testResults.size()>0)
-			{
-				TestResult t = testResults.get(testResults.size()-1);
-				if(t.getFinishTime()<=0) {
+			if (testResults.size() > 0) {
+				TestResult t = testResults.get(testResults.size() - 1);
+				if (t.getFinishTime() <= 0) {
 					Date date = new Date(t.getStartTime());
 					Date continueDate = new Date();
 					long diff = continueDate.getTime() - date.getTime();
 					long diffSeconds = diff / 1000;
 					if (diffSeconds < test.get().getTime() * 60) {
 						Test continueT = test.get();
-						continueT.setTime(continueT.getTime() - (int)diffSeconds/60);
+						continueT.setTime(continueT.getTime() - (int) diffSeconds / 60);
 						return new ResponseEntity<Test>(continueT, HttpStatus.OK);
 					}
 				}
@@ -250,7 +249,8 @@ public class TestController {
 				score.setRetry(1);
 				score.setStudentName(result.getStudent().getName());
 				score.setNumbCorrect(result.getScore());
-				score.setTime((result.getFinishTime() - result.getStartTime()));
+				long time = result.getFinishTime() - result.getStartTime();
+				score.setTime(time < 0 ? 0 : time);
 
 				scores.add(score);
 
@@ -265,8 +265,12 @@ public class TestController {
 
 	@PostMapping("/teacher/addNewTest")
 	public ResponseEntity<String> addNewTest(@RequestParam("sectionId") String sectionid, @RequestBody Test test) {
-		testService.addNewTest(test, sectionid);
-		return new ResponseEntity<String>("Thêm bài kiểm tra mới thành công", HttpStatus.CREATED);
+		try {
+			testService.addNewTest(test, sectionid);
+			return new ResponseEntity<String>("Thêm bài kiểm tra mới thành công", HttpStatus.OK);
+		} catch (Exception e) {
+			return new ResponseEntity<String>("Đã xảy ra lỗi", HttpStatus.BAD_REQUEST);
+		}
 
 	}
 
@@ -279,6 +283,19 @@ public class TestController {
 		} catch (Exception e) {
 			return new ResponseEntity<String>("Đã xảy ra lỗi", HttpStatus.BAD_REQUEST);
 		}
+	}
+
+	@PostMapping("/teacher/editTest")
+	public ResponseEntity<String> editTest(@RequestParam("testId") String testId, @RequestBody Test test) {
+
+		try {
+			test.setId(new ObjectId(testId));
+			testService.updateTest(test);
+			return new ResponseEntity<String>("Chỉnh sửa bài kiểm tra thành công", HttpStatus.OK);
+		} catch (Exception e) {
+			return new ResponseEntity<String>("Đã xảy ra lỗi", HttpStatus.BAD_REQUEST);
+		}
+
 	}
 
 	@GetMapping("/teacher/get-test")
@@ -348,7 +365,8 @@ public class TestController {
 				score.setRetry(1);
 				score.setStudentName(result.getStudent().getName());
 				score.setNumbCorrect(result.getScore());
-				score.setTime(result.getFinishTime() - result.getStartTime());
+				long time = result.getFinishTime() - result.getStartTime();
+				score.setTime(time < 0 ? 0 : time);
 
 				Integer checkExist = hashMap.get(score.getStudentId());
 

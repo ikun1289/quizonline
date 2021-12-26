@@ -1,8 +1,12 @@
 package com.tlcn.quizonline.models;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import lombok.Data;
@@ -23,7 +27,8 @@ public class User {
 	private Boolean gender;//true == male
 	private String role;
 	private Boolean enable;
-	private Activity activity;
+	@DBRef
+	private List<Classroom> recentClass = new ArrayList<Classroom>();
 	
 	public User() {
 		super();
@@ -42,7 +47,6 @@ public class User {
 		this.gender = gender;
 		this.role = role;
 		this.enable = false;
-		this.activity = new Activity();
 	}
 	public User(String userName, String passwd, String email, String name,String role) {
 		super();
@@ -55,7 +59,6 @@ public class User {
 		this.gender = false;
 		this.role = role;
 		this.enable = false;
-		this.activity = new Activity();
 	}
 	
 }

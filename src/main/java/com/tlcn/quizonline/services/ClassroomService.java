@@ -101,6 +101,10 @@ public class ClassroomService {
 		Update update = new Update().pull("students", studentId);
 		return this.mongoTemplate.findAndModify(query, update, Classroom.class);
 	}
+	public void getClassroomByListId(List<String> recentClassId) {
+		// TODO Auto-generated method stub
+		
+	}
 	
 	
 	

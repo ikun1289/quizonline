@@ -1,5 +1,6 @@
 package com.tlcn.quizonline.controllers;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.tlcn.quizonline.JWT.JwtAuthenticationFilter;
 import com.tlcn.quizonline.JWT.JwtTokenProvider;
+import com.tlcn.quizonline.models.Classroom;
 import com.tlcn.quizonline.models.User;
 import com.tlcn.quizonline.payload.LoginResponse;
 import com.tlcn.quizonline.services.UserService;
@@ -122,4 +124,16 @@ public class UserController {
 		}
 		return new ResponseEntity<String>("JWT ko hợp lệ", HttpStatus.UNAUTHORIZED);
 	}
+	
+	@GetMapping("/user/get-activities")
+	public ResponseEntity<?> getActivities(HttpServletRequest request) {
+		String jwt = new JwtAuthenticationFilter().getJwtFromRequest(request);
+		String userId = new JwtTokenProvider().getUserIdFromJWT(jwt);
+		Optional<User> user = userService.getUserById(userId);
+		if (user.isPresent()) {
+			return new ResponseEntity<List<Classroom>>(user.get().getRecentClass(), HttpStatus.OK);
+		}
+		return new ResponseEntity<String>("Xác thực thất bại", HttpStatus.UNAUTHORIZED);
+	}
+	
 }

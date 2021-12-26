@@ -26,6 +26,7 @@ import com.tlcn.quizonline.models.Test;
 import com.tlcn.quizonline.models.User;
 import com.tlcn.quizonline.payload.ClassDetail;
 import com.tlcn.quizonline.payload.ClassSectionDetail;
+import com.tlcn.quizonline.services.ActivityService;
 import com.tlcn.quizonline.services.ClassSectionService;
 import com.tlcn.quizonline.services.ClassroomService;
 import com.tlcn.quizonline.services.TestService;
@@ -42,6 +43,8 @@ public class ClassroomPageController {
 	private TestService testService;
 	@Autowired
 	private UserService userService;
+	@Autowired
+	private ActivityService ActivityService;
 
 	// teacher
 
@@ -82,7 +85,6 @@ public class ClassroomPageController {
 			return new ResponseEntity<String>("Tên lớp không được để trống", HttpStatus.BAD_REQUEST);
 
 		try {
-			System.out.println(teacherId + " "+classId + " "+classroom.get("name"));
 			classroomService.editClassName(classId, teacherId, classroom.get("name"));
 			return new ResponseEntity<String>("Chỉnh sửa classroom thành công", HttpStatus.OK);
 		}catch (Exception e) {
@@ -112,6 +114,7 @@ public class ClassroomPageController {
 		String teacherId = new JwtTokenProvider().getUserIdFromJWT(jwtToken);
 		Classroom c = classroomService.getClassroomByID(classId);
 		if (c != null && c.getTeacherID().equals(teacherId)) {
+			ActivityService.addNewRecentClass(c, teacherId);
 			ClassDetail classDetail = new ClassDetail();
 			classDetail.setName(c.getName());
 			classDetail.setListStudent(userService.listStudent(c.getStudents()));
@@ -161,14 +164,14 @@ public class ClassroomPageController {
 				HttpStatus.BAD_REQUEST);
 	}
 	
-	@PostMapping("/teacher/delete-student-in-class")
+	@PostMapping("/teacher/remove-student-from-class")
 	public ResponseEntity<?> deleteStudentFromClass(HttpServletRequest request, @RequestParam("id") String classId, @RequestBody Map<String, String> body) {
 		String jwtToken = new JwtAuthenticationFilter().getJwtFromRequest(request);
 		String teacherId = new JwtTokenProvider().getUserIdFromJWT(jwtToken);
 		String studentId = body.get("studentId");
 		Classroom c = classroomService.deleteStudentInClass(studentId, classId, teacherId);
 		if(c!=null) {
-			return new ResponseEntity<String>("Xóa học sinh mới thành công", HttpStatus.OK);
+			return new ResponseEntity<String>("Xóa học sinh thành công", HttpStatus.OK);
 		}
 		return new ResponseEntity<String>("Lớp học không tồn tại hoặc bạn không nằm trong lớp học này",
 				HttpStatus.BAD_REQUEST);
@@ -191,6 +194,7 @@ public class ClassroomPageController {
 		String studentId = new JwtTokenProvider().getUserIdFromJWT(jwtToken);
 		Classroom c = classroomService.getClassroomByID(classId);
 		if (c != null && c.getStudents().contains(studentId)) {
+			ActivityService.addNewRecentClass(c, studentId);
 			ClassDetail classDetail = new ClassDetail();
 			classDetail.setName(c.getName());
 			classDetail.setListStudent(userService.listStudent(c.getStudents()));
@@ -244,6 +248,34 @@ public class ClassroomPageController {
 		return new ResponseEntity<String>("Lớp học không tồn tại hoặc bạn không nằm trong lớp học này",
 				HttpStatus.BAD_REQUEST);
 	}
+	
 	// --end of student
+	
+	@GetMapping("/user/back-to-class-from-test")
+	public ResponseEntity<?> backToClass(@RequestParam("testId") String testId) {
+		ClassSection classSection = ClassSectionService.getSectionByTestId(testId);
+		if(classSection == null)
+		{
+			return new ResponseEntity<String>("0", HttpStatus.OK);
+		}
+		Classroom classroom = classroomService.getClassBySectionId(classSection.get_id().toHexString());
+		if(classroom == null)
+		{
+			return new ResponseEntity<String>("0", HttpStatus.OK);
+		}
+		return new ResponseEntity<String>(classroom.getId().toHexString(), HttpStatus.OK);
+		
+	}
+	
+	@GetMapping("/user/back-to-class-from-section")
+	public ResponseEntity<?> backToClass2(@RequestParam("sectionId") String sectionId) {
+		Classroom classroom = classroomService.getClassBySectionId(sectionId);
+		if(classroom == null)
+		{
+			return new ResponseEntity<String>("0", HttpStatus.OK);
+		}
+		return new ResponseEntity<String>(classroom.getId().toHexString(), HttpStatus.OK);
+		
+	}
 
 }
