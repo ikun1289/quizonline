@@ -96,6 +96,12 @@ public class ClassroomService {
 		return this.mongoTemplate.findAndModify(query, update, Classroom.class);
 	}
 	
+	public Classroom deleteStudentInClass(String studentId, String classId) {
+		Query query = new Query(Criteria.where("id").is(classId));
+		Update update = new Update().pull("students", studentId);
+		return this.mongoTemplate.findAndModify(query, update, Classroom.class);
+	}
+	
 	public Classroom deleteStudentInClass(String studentId, String classId, String teacherId) {
 		Query query = new Query(Criteria.where("id").is(classId).andOperator(Criteria.where("teacherID").is(teacherId)));
 		Update update = new Update().pull("students", studentId);

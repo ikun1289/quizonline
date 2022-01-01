@@ -249,6 +249,19 @@ public class ClassroomPageController {
 				HttpStatus.BAD_REQUEST);
 	}
 	
+	@PostMapping("/student/withdraw-from-class")
+	public ResponseEntity<?> withdrawFromClass(HttpServletRequest request, @RequestParam("id") String classId){
+		String jwtToken = new JwtAuthenticationFilter().getJwtFromRequest(request);
+		String studentId = new JwtTokenProvider().getUserIdFromJWT(jwtToken);
+		try {
+			classroomService.deleteStudentInClass(studentId, classId);
+			return new ResponseEntity<String>("Thoát khỏi lớp thành công", HttpStatus.OK);
+		}catch (Exception e) {
+			return new ResponseEntity<String>("Đã xảy ra lỗi", HttpStatus.BAD_REQUEST);
+		}
+		
+	}
+	
 	// --end of student
 	
 	@GetMapping("/user/back-to-class-from-test")

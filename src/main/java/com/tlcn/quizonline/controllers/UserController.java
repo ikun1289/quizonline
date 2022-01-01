@@ -1,5 +1,6 @@
 package com.tlcn.quizonline.controllers;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -131,9 +132,29 @@ public class UserController {
 		String userId = new JwtTokenProvider().getUserIdFromJWT(jwt);
 		Optional<User> user = userService.getUserById(userId);
 		if (user.isPresent()) {
+			if(user.get().getRole().equals("student")) {
+				updateRecentClass(user.get(), userId);
+				user = userService.getUserById(userId);
+			}
+			
 			return new ResponseEntity<List<Classroom>>(user.get().getRecentClass(), HttpStatus.OK);
 		}
 		return new ResponseEntity<String>("Xác thực thất bại", HttpStatus.UNAUTHORIZED);
+	}
+
+	private void updateRecentClass(User user, String studentId) {
+		List<Classroom> c = user.getRecentClass();
+		System.out.println(c);
+		Iterator<Classroom> Iclassroom = c.iterator();
+		while (Iclassroom.hasNext()) {
+
+		    Classroom classroom = Iclassroom.next();
+		    if(!classroom.getStudents().contains(studentId))
+		    	Iclassroom.remove();
+		}
+		
+		user.setRecentClass(c);
+		userService.editUser(user);
 	}
 	
 }

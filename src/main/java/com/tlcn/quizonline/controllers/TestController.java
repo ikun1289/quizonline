@@ -335,8 +335,9 @@ public class TestController {
 			List<TestResult> testResults = testResultService.getTestResultByTestId(testId);
 			ClassSection section = sectionService.getSectionByTestId(testId);
 			List<String> studentsId = new ArrayList<>();
+			Classroom classroom = new Classroom();
 			if (section != null) {
-				Classroom classroom = ClassroomService.getClassBySectionId(section.get_id().toHexString());
+				classroom = ClassroomService.getClassBySectionId(section.get_id().toHexString());
 				if (classroom != null) {
 					studentsId = classroom.getStudents();
 				} else {
@@ -360,13 +361,25 @@ public class TestController {
 			List<StudentScore> scores = new ArrayList<StudentScore>();
 
 			for (TestResult result : testResults) {
+				
 				StudentScore score = new StudentScore();
-				score.setStudentId(result.getStudent().getId().toHexString());
-				score.setRetry(1);
-				score.setStudentName(result.getStudent().getName());
-				score.setNumbCorrect(result.getScore());
-				long time = result.getFinishTime() - result.getStartTime();
-				score.setTime(time < 0 ? 0 : time);
+				try {
+					if(!classroom.getStudents().contains(result.getStudent().getId().toHexString()))
+					{
+						continue;
+					}
+					score.setStudentId(result.getStudent().getId().toHexString());
+					score.setRetry(1);
+					score.setStudentName(result.getStudent().getName());
+					score.setNumbCorrect(result.getScore());
+					long time = result.getFinishTime() - result.getStartTime();
+					score.setTime(time < 0 ? 0 : time);
+				}
+				catch (Exception e) {
+					continue;
+				}
+				
+				
 
 				Integer checkExist = hashMap.get(score.getStudentId());
 
